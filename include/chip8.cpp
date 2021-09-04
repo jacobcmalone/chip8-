@@ -80,6 +80,8 @@
          memory[i] = 0;             //Clear memory
      }
 
+     srand(time(NULL)); //seed rng
+
      loadFont();
  }
 
@@ -120,6 +122,7 @@ void Chip8::cpu00E_() {
 
 void Chip8::cpu00E0() {
     //Clear the display
+    //TODO
 }
 
 void Chip8::cpu00EE() {
@@ -128,35 +131,65 @@ void Chip8::cpu00EE() {
         exit(EXIT_FAILURE);
     }
     sp--;
-    pc = stack[sp] + 2;
+    pc = stack[sp];
+    pc += 2;
 }
 
 void Chip8::cpu1nnn() {
-    //TODO
+    //Jump to address nnn
+    pc = (opcode & 0x0FFF);
 }
 
 void Chip8::cpu2nnn() {
-    //TODO
+    //Call subroutine at cpu1nnn
+    stack[sp] = pc;
+    sp++;
+    pc = (opcode & 0x0FFF);
+    if(pc < 0x200 || pc > 0xFFF) {
+        std::cout << "Out of bounds JMP instruction at PC: " << pc << ", opcode: " << opcode << std::endl;
+    }
 }
 
 void Chip8::cpu3xkk() {
-    //TODO
+    //Skips next instruction if Vx == kk
+    if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpu4xkk() {
-    //TODO
+    //Skips next instruction if Vx != kk
+    if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpu5xy0() {
-    //TODO
+    //Skips next instruction if Vx == Vy
+    if(V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4]) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpu6xkk() {
-    //TODO
+    //Set Vx = kk
+    V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
+    pc += 2;
 }
 
 void Chip8::cpu7xkk() {
-    //TODO
+    //Set Vx = Vx + kk
+    V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+    pc += 2;
 }
 
 void Chip8::cpuARITHMETIC() {
@@ -164,55 +197,114 @@ void Chip8::cpuARITHMETIC() {
 }
 
 void Chip8::cpu8xy0() {
-    //TODO
+    //Set Vx = Vy
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+    pc += 2;
 }
 
 void Chip8::cpu8xy1() {
-    //TODO
+    //Set Vx = Vx OR Vy
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4];
+    pc += 2;
 }
 
 void Chip8::cpu8xy2() {
-    //TODO
+    //Set Vx = Vx AND Vy
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4];
+    pc += 2;
 }
 
 void Chip8::cpu8xy3() {
-    //TODO
+    //Set Vx = Vx XOR Vy
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4];
+    pc += 2;
 }
 
 void Chip8::cpu8xy4() {
-    //TODO
+    //Set Vx = Vx + Vy, set VF = carry
+    V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+    if(V[(opcode & 0x00F0) >> 4] > (0xFF - V[(opcode & 0x0F00) >> 8])) {
+        V[0xF] = 1;
+    }
+    else {
+        V[0xF] = 0;
+    }
+    pc += 2;
 }
 
 void Chip8::cpu8xy5() {
-    //TODO
+    //Set Vx = Vx - Vy, set VF = NOT borrow
+    if(V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4]) {
+        V[0xF] = 1;
+    }
+    else {
+        V[0xF] = 0;
+    }
+    V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
+    pc += 2;
 }
 
 void Chip8::cpu8xy6() {
-    //TODO
+    //Set Vx = Vx SHR 1
+    if((V[(opcode & 0x0F00) >> 8] & 1) == 1) {
+        V[0xF] = 1;
+    }
+    else {
+        V[0xF] = 0;
+    }
+    V[(opcode & 0x0F00) >> 8] >> 1;
+    pc += 2;
 }
 
 void Chip8::cpu8xy7() {
-    //TODO
+    //Set Vx = Vy - Vx, set VF = NOT borrow
+    if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >> 8]) {
+        V[0xF] = 1;
+    }
+    else {
+        V[0xF] = 0;
+    }
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
+    pc += 2;
 }
 
 void Chip8::cpu8xyE() {
-    //TODO
+    //Set Vx = Vx SHL 1
+    if(V[(opcode & 0x0F00) >> 8] & 0x80 == 1) {
+        V[0xF] = 1;
+    }
+    else {
+        V[0xF] = 0;
+    }
+    V[(opcode & 0x0F00) >> 8] << 1;
+    pc += 2;
 }
 
 void Chip8::cpu9xy0() {
-    //TODO
+    //Skips next instruction if Vx != Vy
+    if(V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4]) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpuAnnn() {
-    //TODO
+    //Set I = nnn
+    I = opcode & 0x0FFF;
+    pc += 2;
 }
 
 void Chip8::cpuBnnn() {
-    //TODO
+    //Jump to location nnn + V0
+    pc = (opcode & 0x0FFF) + V[0];
 }
 
 void Chip8::cpuCxkk() {
-    //TODO
+    //Set Vx = random byte AND kk
+    V[(opcode & 0x0F00) >> 8] = (rand() % 255) & (opcode & 0x00FF);
+    pc += 2;
 }
 
 void Chip8::cpuDxyn() {

@@ -5,10 +5,13 @@
 
  #include <cstdint>
  #include <cstdio>
+ #include <cstdlib>
+ #include <time.h>
  #include <string>
  #include <fstream>
  #include <iostream>
  #include <vector>
+ #include <random>
 
 //This macro is for an array of pointer-to-member-function
  #define CALL_MEMBER_FN(object,ptrToMember) ((object).*(ptrToMember))
@@ -37,6 +40,7 @@
         uint8_t delayTimer;
         uint8_t soundTimer;
         bool memDump;
+
 
 
         void loadFont();
