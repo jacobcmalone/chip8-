@@ -8,19 +8,23 @@
 #define MEMDUMP false
 #define DEBUG true
 
-Chip8 chip8(MEMDUMP);
 
 int main(int argc, char* argv[]) {
-    char loop;
-    std::string romFile = "testrom/BC_test.ch8";
+    Chip8 chip8(MEMDUMP);
+
+    char wait;
+    std::string romFile = "testrom/BD_test.ch8";
     chip8.init();
     chip8.loadRom(romFile);
-    while(true) {
+    while(!chip8.endEmulation()) {
         chip8.emulateCycle();
         if(DEBUG) {
             chip8.displayStatus();
         }
-        std::cin >> loop;
     }
+    if(DEBUG) {
+        chip8.displayStatus();
+    }
+    std::cin >> wait;
     return 0;
 }

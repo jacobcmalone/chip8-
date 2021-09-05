@@ -5,8 +5,10 @@
 
  #include "chip8.h"
 
- Chip8::Chip8(bool dumpMemory) {
+ Chip8::Chip8(bool dumpMemory, bool wrapX, bool wrapY) {
      memDump = dumpMemory;
+     xwrap = wrapX;
+     ywrap = wrapY;
  }
 
  void Chip8::displayStatus() {
@@ -77,6 +79,12 @@
      delayTimer = 0;
      soundTimer = 0;
 
+     for (int i = 0; i < 32; ++i) {
+         for(int j = 0; j < 64; ++j) {
+             screenBuffer[i][j] = 0;
+         }
+     }
+
      for(int i = 0; i < 16; ++i) {
          stack[i] = 0;
          V[i] = 0;                  //Clear stack, registers, and keyboard
@@ -103,12 +111,23 @@ void Chip8::loadRom(std::string romFile) {
         for(int i = 0; i < buffer.size(); ++i) {
             memory[0x200 + i] = buffer[i];
         }
+        endOfRom = 0x200 + buffer.size();
+        printf("End of Rom: %x", endOfRom);
     }
 }
 
 void Chip8::emulateCycle() {
     fetchOpcode();
     std::invoke(chip8Table[(opcode & 0xF000) >> 12], *this);
+
+    //Update timers
+    if (delayTimer > 0) {
+        --delayTimer;
+    }
+    if(soundTimer > 0) {
+        //TODO: Implement sound
+        --soundTimer;
+    }
 }
 
 void Chip8::cpu00E_() {
@@ -324,21 +343,19 @@ void Chip8::cpuCxkk() {
 void Chip8::cpuDxyn() {
     //Display n-byte sprite starting at memory location I at (Vx, Vy)
     //Set VF = collision
-    uint8_t height = opcode & 0x000F;
+    uint8_t n = opcode & 0x000F;
     uint8_t x = V[(opcode & 0x0F00) >> 8];
     uint8_t y = V[(opcode & 0x00F0) >> 4];
-    uint8_t pixel;
+    uint8_t sprite;
     V[0xF] = 0;
 
-    for (int yline = 0; yline < height; ++yline) {
-        pixel = memory[yline + I];
-        for (int xline = 0; xline < 8; ++xline) {
-            if(pixel & (0x80 >> xline) == 1) {
-                if(screenBuffer[y + yline][x + xline] == 1) {
-                    V[0xF] = 1;
-                }
-                screenBuffer[y + yline][x + xline] ^= 1;
+    for (uint8_t yOffset = 0; yOffset < n; ++yOffset) {
+        sprite = memory[I + yOffset];
+        for (uint8_t xOffset = 0; xOffset < 8; ++xOffset) {
+            if(screenBuffer[y+yOffset][x+xOffset] & ((sprite >> (7-xOffset)) & 1) != 0) {
+                V[0xF] = 1;
             }
+            screenBuffer[y+yOffset][x+xOffset] ^= ((sprite >> (7-xOffset)) & 1);
         }
     }
 
@@ -427,39 +444,75 @@ void Chip8::cpuFx_() {
 }
 
 void Chip8::cpuFx07() {
-    //TODO
+    //TSet Vx = delayTimer
+    V[(opcode & 0x0F00) >> 8] = delayTimer;
+    pc +=2;
 }
 
 void Chip8::cpuFx0A() {
-    //TODO
+    //Wait for key press, then store the value of the key in Vx
+    bool key_pressed = false;
+    while (!key_pressed) {
+        for (int i = 0; i < 16; ++i) {
+            if(keyboard[i] != 0) {
+                V[(opcode & 0x0F00) >> 8] = i;
+                key_pressed = true;
+                break;
+            }
+        }
+    }
+    pc += 2;
 }
 
 void Chip8::cpuFx15() {
-    //TODO
+    //Set delayTimer = Vx
+    delayTimer = V[(opcode & 0x0F00) >> 8];
+    pc += 2;
 }
 
 void Chip8::cpuFx18() {
-    //TODO
+    //Set soundTimer = Vx
+    soundTimer = V[(opcode & 0x0F00) >> 8];
+    pc += 2;
 }
 
 void Chip8::cpuFx1E() {
-    //TODO
+    //Set I = I + Vx
+    I += V[(opcode & 0x0F00) >> 8];
+    pc += 2;
 }
 
 void Chip8::cpuFx29() {
-    //TODO
+    //Set I = location of sprite for digit Vx
+    I = V[(opcode & 0x0F00) >> 8] * 0x5;
+    pc += 2;
 }
 
 void Chip8::cpuFx33() {
-    //TODO
+    //Store BCD representation of Vx in memory locations I, I+1, I+2
+    memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
+    memory[I + 1] = (V[(opcode & 0x0F00) >> 8] - memory[I] * 100) / 10;
+    memory[I + 2] = V[(opcode & 0x0F00) >> 8] - memory[I]*100 - memory[I+1]*10;
+
+    pc += 2;
 }
 
 void Chip8::cpuFx55() {
-    //TODO
+    //Store registers V0 through Vx in memory starting at location I.
+    uint8_t x = (opcode & 0x0F00) >> 8;
+    for (int j = 0; j < x; ++j) {
+        memory[I + j] = V[j];
+    }
+    pc += 2;
 }
 
 void Chip8::cpuFx65() {
-    //TODO
+    //Read registers V0 through Vx from memory starting at location I.
+    uint8_t x = (opcode & 0x0F00) >> 8;
+    for (int j = 0; j < x; ++j) {
+        V[j] = memory[I + j];
+    }
+    pc += 2;
 }
 
 void Chip8:: cpuDEFAULT() {

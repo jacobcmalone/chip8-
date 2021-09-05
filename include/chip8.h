@@ -19,13 +19,14 @@
 
  class Chip8 {
     public:
-        Chip8(bool memoryDump = false);
+        Chip8(bool memoryDump = false, bool wrapX = true, bool wrapY = true);
         void displayStatus();
         void init();
         void loadRom(std::string romFile);
         void emulateCycle();
+        bool endEmulation() {return pc >= endOfRom;}
 
-        uint8_t screenBuffer[32][64];
+        uint8_t screenBuffer[32][64]; //bitmap 64 * 32
         uint8_t keyboard[16];
         bool drawFlag;
 
@@ -57,6 +58,9 @@
         uint8_t delayTimer;
         uint8_t soundTimer;
         bool memDump;
+        bool xwrap;
+        bool ywrap;
+        uint16_t endOfRom;
 
         void loadFont();
 
