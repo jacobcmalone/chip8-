@@ -12,12 +12,12 @@
  #include <iostream>
  #include <vector>
  #include <random>
+ #include <functional>
 
 //This macro is for an array of pointer-to-member-function
- #define CALL_MEMBER_FN(object,ptrToMember) ((object).*(ptrToMember))
+//#define CALL_MEMBER_FN(object,ptrToMember) ((object).*(ptrToMember))
 
  class Chip8 {
-    typedef void (Chip8::*Chip8MemFn)();    //Pointer-to-member-function typedef
     public:
         Chip8(bool memoryDump = false);
         void displayStatus();
@@ -25,9 +25,26 @@
         void loadRom(std::string romFile);
         void emulateCycle();
 
-        uint8_t screen[64*32];
+        uint8_t screenBuffer[32][64];
         uint8_t keyboard[16];
         bool drawFlag;
+
+        typedef void (Chip8::*Chip8MemFn)();    //Pointer-to-member-function typedef
+        Chip8MemFn chip8Table[16] = {
+            &Chip8::cpu00E_, &Chip8::cpu1nnn, &Chip8::cpu2nnn, &Chip8::cpu3xkk,
+            &Chip8::cpu4xkk, &Chip8::cpu5xy0, &Chip8::cpu6xkk, &Chip8::cpu7xkk,
+            &Chip8::cpuARITHMETIC, &Chip8::cpu9xy0, &Chip8::cpuAnnn, &Chip8::cpuBnnn,
+            &Chip8::cpuCxkk, &Chip8::cpuDxyn, &Chip8::cpuEx_, &Chip8::cpuFx_
+        };
+
+        Chip8MemFn chip8Arithmetic[16] = {
+            &Chip8::cpu8xy0, &Chip8::cpu8xy1, &Chip8::cpu8xy2, &Chip8::cpu8xy3,
+            &Chip8::cpu8xy4, &Chip8::cpu8xy5, &Chip8::cpu8xy6, &Chip8::cpu8xy7,
+            &Chip8::cpuNULL, &Chip8::cpuNULL, &Chip8::cpuNULL, &Chip8::cpuNULL,
+            &Chip8::cpuNULL, &Chip8::cpuNULL, &Chip8::cpu8xyE, &Chip8::cpuDEFAULT
+        };
+
+
 
     private:
         uint8_t memory[0xFFF];
@@ -40,8 +57,6 @@
         uint8_t delayTimer;
         uint8_t soundTimer;
         bool memDump;
-
-
 
         void loadFont();
 
@@ -109,25 +124,5 @@
         void cpuFx65();         //LD  Vx,  [I]
 
         void cpuDEFAULT();
-
-        Chip8MemFn chip8Table[17] = {
-            cpu00E_, cpu1nnn, cpu2nnn, cpu3xkk, cpu4xkk, cpu5xy0, cpu6xkk, cpu7xkk,
-            cpuARITHMETIC, cpu9xy0, cpuAnnn, cpuBnnn, cpuCxkk, cpuDxyn, cpuEx_, cpuFx_,
-            cpuDEFAULT
-        };
-
-        Chip8MemFn chip8Arithmetic[16] = {
-            cpu8xy0, cpu8xy1, cpu8xy2, cpu8xy3, cpu8xy4, cpu8xy5, cpu8xy6, cpu8xy7,
-            cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpu8xyE, cpuDEFAULT,
-        };
-
-        //Chip8MemFn chip8Ex_[3] = {
-        //    cpuEx9E, cpuExA1, cpuDEFAULT
-        //}
-
-        //Chip8MemFn chip8Fx_[10] = {
-        //    cpuFx07, cpuFx0A, cpuFx15, cpuFx18, cpuFx1E,
-        //    cpuFx29, cpuFx33, cpuFx55, cpuFx65, cpuDEFAULT
-        //}
 
 };

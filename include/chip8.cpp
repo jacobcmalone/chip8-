@@ -10,7 +10,7 @@
  }
 
  void Chip8::displayStatus() {
-     printf("Opcode: %x\n", opcode);
+     printf("Opcode: %04x\n", opcode);
      printf("PC: %x\n", pc);
      printf("SP: %x\n", sp);
      printf("V: ");
@@ -26,10 +26,17 @@
          printf("%04x ", stack[i]);
      }
      printf("\n");
+     printf("Screen: \n");
+     for(int i = 0; i < 32; ++i) {
+         for(int j = 0; j < 64; ++j) {
+             printf("%x", screenBuffer[i][j]);
+         }
+         printf("\n");
+     }
      if(memDump) {
-         printf("Memory: ");
+         printf("Memory: \n");
          for(int i = 0x000; i < 0xFFF; ++i) {
-             if(i % 5 == 0) {
+             if(i % 5 == 0 && i != 0) {
                  printf("\n");
              }
              printf("%02x", memory[i]);
@@ -101,10 +108,11 @@ void Chip8::loadRom(std::string romFile) {
 
 void Chip8::emulateCycle() {
     fetchOpcode();
-    CALL_MEMBER_FN(*this, chip8Table[(opcode&0xF000) >> 12]);
+    std::invoke(chip8Table[(opcode & 0xF000) >> 12], *this);
 }
 
 void Chip8::cpu00E_() {
+    std::cout << "In cpu00E_()\n";
     switch (opcode & 0x00FF) {
         case 0x00E0:
             cpu00E0();
@@ -122,7 +130,13 @@ void Chip8::cpu00E_() {
 
 void Chip8::cpu00E0() {
     //Clear the display
-    //TODO
+    for (int i = 0; i < 32; ++i) {
+        for(int j = 0; j < 64; ++j) {
+            screenBuffer[i][j] = 0;
+        }
+    }
+    drawFlag = true;
+    pc += 2;
 }
 
 void Chip8::cpu00EE() {
@@ -193,7 +207,7 @@ void Chip8::cpu7xkk() {
 }
 
 void Chip8::cpuARITHMETIC() {
-    CALL_MEMBER_FN(*this, chip8Arithmetic[(opcode&0x000F)]);
+    std::invoke(chip8Arithmetic[(opcode&0x000F)], *this);
 }
 
 void Chip8::cpu8xy0() {
@@ -308,19 +322,64 @@ void Chip8::cpuCxkk() {
 }
 
 void Chip8::cpuDxyn() {
-    //TODO
+    //Display n-byte sprite starting at memory location I at (Vx, Vy)
+    //Set VF = collision
+    uint8_t height = opcode & 0x000F;
+    uint8_t x = V[(opcode & 0x0F00) >> 8];
+    uint8_t y = V[(opcode & 0x00F0) >> 4];
+    uint8_t pixel;
+    V[0xF] = 0;
+
+    for (int yline = 0; yline < height; ++yline) {
+        pixel = memory[yline + I];
+        for (int xline = 0; xline < 8; ++xline) {
+            if(pixel & (0x80 >> xline) == 1) {
+                if(screenBuffer[y + yline][x + xline] == 1) {
+                    V[0xF] = 1;
+                }
+                screenBuffer[y + yline][x + xline] ^= 1;
+            }
+        }
+    }
+
+    drawFlag = true;
+    pc += 2;
 }
 
 void Chip8::cpuEx_() {
-    //TODO
+    switch (opcode & 0x00FF) {
+        case 0x009E:
+            cpuEx9E();
+            break;
+
+        case 0x00A1:
+            cpuExA1();
+            break;
+
+        default:
+            cpuDEFAULT();
+            break;
+    }
 }
 
 void Chip8::cpuEx9E() {
-    //TODO
+    //Skips next instruction if key w/ value Vx is pressed
+    if(keyboard[(opcode & 0x0F00) >> 8] != 0) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpuExA1() {
-    //TODO
+    //Skips next instruction if key w/ value Vx is NOT pressed
+    if(keyboard[(opcode & 0x0F00) >> 8] == 0) {
+        pc += 4;
+    }
+    else {
+        pc += 2;
+    }
 }
 
 void Chip8::cpuFx_() {

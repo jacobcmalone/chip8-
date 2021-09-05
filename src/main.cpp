@@ -11,12 +11,16 @@
 Chip8 chip8(MEMDUMP);
 
 int main(int argc, char* argv[]) {
+    char loop;
     std::string romFile = "testrom/BC_test.ch8";
     chip8.init();
     chip8.loadRom(romFile);
-    chip8.emulateCycle();
-    if(DEBUG) {
-        chip8.displayStatus();
+    while(true) {
+        chip8.emulateCycle();
+        if(DEBUG) {
+            chip8.displayStatus();
+        }
+        std::cin >> loop;
     }
     return 0;
 }
