@@ -285,7 +285,7 @@ void Chip8::cpu8xy6() {
     else {
         V[0xF] = 0;
     }
-    V[(opcode & 0x0F00) >> 8] >> 1;
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] >> 1;
     pc += 2;
 }
 
@@ -309,7 +309,7 @@ void Chip8::cpu8xyE() {
     else {
         V[0xF] = 0;
     }
-    V[(opcode & 0x0F00) >> 8] << 1;
+    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] << 1;
     pc += 2;
 }
 
@@ -490,17 +490,17 @@ void Chip8::cpuFx29() {
 
 void Chip8::cpuFx33() {
     //Store BCD representation of Vx in memory locations I, I+1, I+2
-    memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
-    memory[I + 1] = (V[(opcode & 0x0F00) >> 8] - memory[I] * 100) / 10;
-    memory[I + 2] = V[(opcode & 0x0F00) >> 8] - memory[I]*100 - memory[I+1]*10;
+    memory[I]     = V[(opcode & 0x0F00) >> 8] / 100;
+    memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
+    memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
 
     pc += 2;
 }
 
 void Chip8::cpuFx55() {
     //Store registers V0 through Vx in memory starting at location I.
-    uint8_t x = (opcode & 0x0F00) >> 8;
-    for (int j = 0; j < x; ++j) {
+    int x = (opcode & 0x0F00) >> 8;
+    for (int j = 0; j <= x; ++j) {
         memory[I + j] = V[j];
     }
     pc += 2;
@@ -508,8 +508,8 @@ void Chip8::cpuFx55() {
 
 void Chip8::cpuFx65() {
     //Read registers V0 through Vx from memory starting at location I.
-    uint8_t x = (opcode & 0x0F00) >> 8;
-    for (int j = 0; j < x; ++j) {
+    int x = (opcode & 0x0F00) >> 8;
+    for (int j = 0; j <= x; ++j) {
         V[j] = memory[I + j];
     }
     pc += 2;
