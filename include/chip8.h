@@ -27,7 +27,7 @@
         bool endEmulation() {return pc >= endOfRom;}
 
         uint8_t screenBuffer[32][64]; //bitmap 64 * 32
-        uint8_t keyboard[16];
+        int keyboard[16];
         bool drawFlag;
 
         typedef void (Chip8::*Chip8MemFn)();    //Pointer-to-member-function typedef

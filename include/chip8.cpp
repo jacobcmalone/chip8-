@@ -131,7 +131,6 @@ void Chip8::emulateCycle() {
 }
 
 void Chip8::cpu00E_() {
-    std::cout << "In cpu00E_()\n";
     switch (opcode & 0x00FF) {
         case 0x00E0:
             cpu00E0();
@@ -381,7 +380,7 @@ void Chip8::cpuEx_() {
 
 void Chip8::cpuEx9E() {
     //Skips next instruction if key w/ value Vx is pressed
-    if(keyboard[(opcode & 0x0F00) >> 8] != 0) {
+    if(keyboard[V[(opcode & 0x0F00) >> 8]] != 0) {
         pc += 4;
     }
     else {
@@ -391,7 +390,7 @@ void Chip8::cpuEx9E() {
 
 void Chip8::cpuExA1() {
     //Skips next instruction if key w/ value Vx is NOT pressed
-    if(keyboard[(opcode & 0x0F00) >> 8] == 0) {
+    if(keyboard[V[(opcode & 0x0F00) >> 8]] == 0) {
         pc += 4;
     }
     else {
