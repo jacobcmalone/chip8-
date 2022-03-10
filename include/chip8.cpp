@@ -117,7 +117,11 @@ void Chip8::loadRom(std::string romFile) {
 }
 
 void Chip8::emulateCycle() {
-    fetchOpcode();
+    if(endEmulation()) {
+        opcode = 0x00E0;
+    }
+    else
+        fetchOpcode();
     std::invoke(chip8Table[(opcode & 0xF000) >> 12], *this);
 
     //Update timers
