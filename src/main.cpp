@@ -3,8 +3,8 @@
  * 2021
  */
 
-#include <chip8.h>
-#include <SDL2/SDL.h>
+#include "chip8.h"
+#include "screen.h"
 #include <chrono>
 #include <thread>
 
@@ -12,9 +12,11 @@
 #define DEBUG false
 
 const std::string romFile = "roms/space_invaders.ch8";
+/*
 const int SCALING = 8;
 const uint32_t BG = 0x0;
 const uint32_t FG = 0xFFFFFF;
+*/
 const uint32_t frameTime = 2;
 
 int keys[16] = {
@@ -30,10 +32,14 @@ int main (int argc, char* argv[]) {
     chip8.init();
     chip8.loadRom(romFile);
 
+    Screen screen;
+    screen.init();
+
     uint32_t start_time;
     uint32_t last_time;
     uint32_t elapsed_time;
 
+    /*
     SDL_Window* window = NULL;
     SDL_Surface* surface = NULL;
     SDL_Surface* frameBuffer = NULL;
@@ -54,6 +60,7 @@ int main (int argc, char* argv[]) {
             frameBuffer = SDL_GetWindowSurface(window);
         }
     }
+    */
 
     bool quit = false;
     SDL_Event e;
@@ -96,6 +103,8 @@ int main (int argc, char* argv[]) {
         //Draw to SDL window
         if(chip8.drawFlag){
             chip8.drawFlag = false;
+            screen.draw(chip8.screenBuffer);
+            /*
             SDL_FillRect(frameBuffer, NULL, BG);
             SDL_Rect pixel;
             for(int y = 0; y < 32; ++y) {
@@ -110,6 +119,7 @@ int main (int argc, char* argv[]) {
             }
             SDL_BlitSurface(frameBuffer, NULL, surface, NULL);
             SDL_UpdateWindowSurface(window);
+            */
         }
 
         if(DEBUG) {
@@ -121,8 +131,11 @@ int main (int argc, char* argv[]) {
         }
 
     }
+    /*
     SDL_FreeSurface(frameBuffer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    */
+    screen.close();
     return 0;
 }
