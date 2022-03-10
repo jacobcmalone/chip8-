@@ -46,6 +46,33 @@
      SDL_UpdateWindowSurface(window);
  }
 
+ void Screen::handleInput(int chip8keyboard[16]){
+     while(SDL_PollEvent(&e)) {
+         if(e.type == SDL_QUIT) {
+             exit(0);
+         }
+         if(e.type == SDL_KEYDOWN) {
+             if(e.key.keysym.sym == SDLK_ESCAPE) {
+                 exit(0);
+             }
+             for(int i = 0; i < 16; ++i) {
+                 if(e.key.keysym.sym == keys[i]) {
+                     chip8keyboard[i] = 1;
+                 }
+             }
+
+         }
+         if(e.type == SDL_KEYUP) {
+             for(int i = 0; i < 16; ++i) {
+                 if(e.key.keysym.sym == keys[i]) {
+                     chip8keyboard[i] = 0;
+                 }
+             }
+
+         }
+     }
+ }
+
  void Screen::close() {
      SDL_FreeSurface(frameBuffer);
      SDL_DestroyWindow(window);

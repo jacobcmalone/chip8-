@@ -18,13 +18,14 @@ const uint32_t BG = 0x0;
 const uint32_t FG = 0xFFFFFF;
 */
 const uint32_t frameTime = 2;
-
+/*
 int keys[16] = {
     SDLK_x, SDLK_1, SDLK_2, SDLK_3,
     SDLK_q, SDLK_w, SDLK_e, SDLK_a,
     SDLK_s, SDLK_d, SDLK_z, SDLK_c,
     SDLK_4, SDLK_r, SDLK_f, SDLK_v
 };
+*/
 
 int main (int argc, char* argv[]) {
 
@@ -70,7 +71,7 @@ int main (int argc, char* argv[]) {
     */
 
     bool quit = false;
-    SDL_Event e;
+    //SDL_Event e;
     last_time = SDL_GetTicks();
 
     while(!quit) {
@@ -78,6 +79,8 @@ int main (int argc, char* argv[]) {
         elapsed_time = start_time - last_time;
 
         //Handle SDL Events (Keyboard)
+        screen.handleInput(chip8.keyboard);
+        /*
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {
                 return 0;
@@ -102,6 +105,7 @@ int main (int argc, char* argv[]) {
 
             }
         }
+        */
 
         chip8.emulateCycle();
         if(chip8.endEmulation())
