@@ -11,7 +11,7 @@
 #define MEMDUMP false
 #define DEBUG false
 
-const std::string romFile = "roms/cave.ch8";
+const std::string romFile = "roms/space_invaders.ch8";
 const int SCALING = 8;
 const uint32_t BG = 0x0;
 const uint32_t FG = 0xFFFFFF;
@@ -90,6 +90,8 @@ int main (int argc, char* argv[]) {
         }
 
         chip8.emulateCycle();
+        if(chip8.endEmulation())
+            quit = true;
 
         //Draw to SDL window
         if(chip8.drawFlag){
@@ -117,7 +119,9 @@ int main (int argc, char* argv[]) {
         if(SDL_GetTicks() - start_time < frameTime) {
             SDL_Delay(frameTime - (SDL_GetTicks() - start_time));
         }
+
     }
+    SDL_FreeSurface(frameBuffer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
