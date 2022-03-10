@@ -11,7 +11,7 @@
 #define MEMDUMP false
 #define DEBUG false
 
-const std::string romFile = "roms/space_invaders.ch8";
+//const std::string romFile = "roms/space_invaders.ch8";
 /*
 const int SCALING = 8;
 const uint32_t BG = 0x0;
@@ -27,6 +27,13 @@ int keys[16] = {
 };
 
 int main (int argc, char* argv[]) {
+
+    if(argc < 2) {
+        std::cout << "Usage: ./chip8.exe [path to ROM]\n";
+        return 0;
+    }
+
+    const std::string romFile = argv[1];
 
     Chip8 chip8(MEMDUMP);
     chip8.init();
